@@ -1,0 +1,19 @@
+{
+    "manifest_version": 2,
+    "name": "Tusmhack",
+    "version": "1.0",
+  
+    "description": "Cheat for tusmo",
+  
+    "icons": {
+      "48": "icons/word.png"
+    },
+  
+    "content_scripts": [
+      {
+        "matches": ["https://www.tusmo.xyz/*"],
+        "js": ["main.js"]
+      }
+    ]
+  }
+  
