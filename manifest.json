@@ -8,7 +8,6 @@
     "icons": {
       "48": "icons/word.png"
     },
-  
     "content_scripts": [
       {
         "matches": ["https://www.tusmo.xyz/*"],
