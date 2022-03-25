@@ -1,10 +1,13 @@
+// If the script is active the border become red red
+document.body.style.border = "5px solid red";
+
 /**
  * @credits https://www.liste-de-mots.com/
- *  
+ *
  * @param {int} length Length of the word
  * @param {char} initial First letter of the word
  * @returns {Array[String]} Array of words
- * 
+ *
  * @brief Returns all the french words of {length} starting with {initial}
  */
 function pick(length, initial)
@@ -517,7 +520,7 @@ function pick(length, initial)
 /**
  * @param {String} letter Letter to map
  * @returns {Int} Keyboard pos
- * 
+ *
  * @brief Mapping the given letter to it's keyboard position
  */
 function string_to_key(letter)
@@ -612,26 +615,34 @@ function string_to_key(letter)
 
 /**
  * @param {int} key 
- * 
+ *
  * @brief Clicking the {key} corresponding to its given alphabetical position
  */
 function keypress(key)
 {
     keys[key].click();
-} 
+}
 
-/***
+
+
+/**
  *******************
- ** Global variables 
+ *******************
+ ** Global variables
+ *******************
  *******************
  */
 
-// when false, end the process
-var keepGoing = true;
+
 
 // To determine if the game is tusmo or tuzmo
 var tuzmo = true;
-document.body.style.border = "5px solid red";
+
+// counter of word found
+var wordFound = 0;
+
+// when false, end the process
+var keepGoing = true;
 
 // All the grids of guess since word 1
 var allCells;
@@ -666,29 +677,50 @@ var gridBorders = document.getElementsByClassName("grid-cell border-2");
 if (allCells.length > gridBorders.length)
     cellPos = allCells.length - gridBorders.length;
 
+
 // Getting the initial of the current word and adding to good letters
 var initial = allCells[cellPos].firstChild.textContent;
 goodLetters += initial;
 
 // Length of the current word
-var worldLenght = gridBorders.length / 6;
+var wordLenght = gridBorders.length / 6;
 
-// List of all the posible word with Lenght: wordLength, Initial: initial.
-var picked = pick(worldLenght,initial);
+console.log("start with initial " + initial + " and length " + wordLenght);
+
+
+// List of all the posible word with Lenght: wordLenght, Initial: initial.
+var picked = pick(wordLenght,initial);
+
 
 
 
 /**
+ ******************
  ******************
  **   Functions
  ******************
+ ******************
  */
+
+
+
 
 /**
  * @brief Sending a random word from {picked} to the game
- */ 
+ */
 function send()
 {
+    if (typeof(allCells[(i + cellPos)]) === 'undefined' )
+    {
+        keepGoing = false;
+        return;
+    }
+    if (typeof(allCells[i + cellPos].firstChild) === 'undefined')
+    {
+        keepGoing = false;
+        return;
+    }
+
     if (!keepGoing || picked.length == 0)
     {
         keepGoing = false;
@@ -731,17 +763,17 @@ function removeFromPickedGood(char, pos)
 
 
 /**
- * @param {char} char   Character to find
- * @param {int} pos     Position to look for char
- * 
- * @brief Removing all the words with {char} at {pos} in {picked}
+ * @param {char} char   Character to remove
+ * @returns {void}
+ *
+ * @brief Removing all the words without {char} in {picked}
  */
-function removeFromPickedBad(char, pos)
+function removeFromPickedNotIncluding(char)
 {
     var end = picked.length;
     for (var i = 0; i < end; i++)
     {
-        if (picked[i].charAt(pos) == char)
+        if (!picked[i].includes(char))
         {
             picked.splice(i,1);
             end--;
@@ -752,36 +784,52 @@ function removeFromPickedBad(char, pos)
 
 
 /**
- * @param {char} char   Character to remove
- * @returns {void}
- * @brief Removing all the words without {char} in {picked}
+ * @param {char} char   Character to find
+ * @param {int} pos     Position to look for char
+ *
+ * @brief Removing all the words with {char} at {pos} in {picked}
  */
-function removeFromPickedNotIncluding(char)
-{
-    var end = picked.length;
-    for (var i = 0; i < end; i++)
-    {   
-        if (!picked[i].includes(char))
-        {
-            picked.splice(i,1);
-            end--;
-            i--;
-        }        
-    }
-}
+ function removeFromPickedBad(char, pos)
+ {
+     var end = picked.length;
+     for (var i = 0; i < end; i++)
+     {
+         if (picked[i].charAt(pos) == char)
+         {
+             picked.splice(i,1);
+             end--;
+             i--;
+         }
+     }
+ }
 
 
-function removeFromPickedListChar(list)
+/**
+ * @param {String} str
+ *
+ * @brief Removing all the words from {picked} containing any char of {str}
+ */
+function removeFromPickedListChar(str)
 {
-    for (var i = 0; i < list.length; i++)
+    for (var i = 0; i < str.length; i++)
     {
-        if (!goodLetters.includes(list[i]))
+        if (!goodLetters.includes(str[i]))
         {
-            for (var j = 1; j < worldLenght; j++)
-                removeFromPickedBad(list[i],j);
+            var end = picked.length;
+            for (var j = 0; j < end; j++)
+            {
+                if (picked[j].includes(str[i]))
+                {
+                    picked.splice(j,1)
+                    end--;
+                    j--;
+                }
+            }
         }
     }
+    console.log("removed all: " + str + " from words");
 }
+
 
 /**
  * @param {char} char
@@ -794,6 +842,7 @@ function addGoodLetter(char)
         goodLetters+= char;
 }
 
+
 /**
  * @brief Considering the last word input, removing not coresponding word from {picked}
  */
@@ -803,10 +852,22 @@ function update_picked()
         return;
 
     var checkLater = new String("");
-    for (var i = 1; i < worldLenght; i++)
+    console.log("Before update :");
+    console.log(picked);
+    for (var i = 1; i < wordLenght; i++)
     {
+        if (typeof(allCells[(i + cellPos)]) === 'undefined' )
+        {
+            keepGoing = false;
+            return;
+        }
+        if (typeof(allCells[i + cellPos].firstChild) === 'undefined')
+        {
+            keepGoing = false;
+            return;
+        }
         var char = allCells[i + cellPos].firstChild.textContent;
-        var classNamed = gridBorders[i + (currentLine * worldLenght)].firstChild.className;
+        var classNamed = gridBorders[i + (currentLine * wordLenght)].firstChild.className;
         if (typeof(char) === 'undefined')
         {
             keepGoing = false;
@@ -829,29 +890,36 @@ function update_picked()
             
             case "cell-content fr -":
             case "cell-content zutom -":
-                addGoodLetter(char);
+                checkLater += char;
                 removeFromPickedBad(char, i);
                 break;
         }
     }
     removeFromPickedListChar(checkLater);
-
-    cellPos += worldLenght;
+    console.log("After update :");
+    console.log(picked);
+    cellPos += wordLenght;
     currentLine++;
 }
 
 
+// Delay between words to send
 var delay = 0;
+// Number of word tried 
+var tried = 0;
 /**
  * @brief Sending a random word with delay and updating {picked}
  */
 function send_with_delay()
 {
+    if (tried == 0)
+        delay += 500
     setTimeout(() => {
         if (keepGoing)
             send();
         else
             delay-= 750;
+
         }, delay);
     delay += 750;
 
@@ -869,19 +937,60 @@ function send_with_delay()
  */
 function start()
 {
-    for (var i = 0; i < 6; i++)
+    while (tried < 6 && keepGoing)
     {
-        if (keepGoing)
-            send_with_delay();
+        if (tried == 1)
+            delay += 500
+        send_with_delay();
+        tried++;
     }
+    wordFound++;
+}
+
+ /**
+ * @brief Reset all the global variables
+ */
+function reset()
+{
+    keepGoing = true;
+    goodLetters = new String("");
+    currentLine = 0;
+    if (tuzmo)
+        allCells = document.getElementsByClassName("cell-content zutom");
+    else
+        allCells = document.getElementsByClassName("cell-content fr");
+    gridBorders = document.getElementsByClassName("grid-cell border-2");
+    cellPos = allCells.length - gridBorders.length;
+    initial = allCells[cellPos].firstChild.textContent;
+    goodLetters += initial;
+    wordLenght = gridBorders.length / 6;
+    picked = pick(wordLenght,initial);
+    delay = 0;
+    tried = 0;
 }
 
 
-let btn = document.createElement("button");
-btn.innerHTML = "Start";
-btn.addEventListener("click", function () {
-  alert("Button is clicked");
-});
-document.body.appendChild(btn);
 
-start();
+/**
+ ******************
+ ******************
+ **   Buttons
+ ******************
+ ******************
+ */
+
+
+
+var myStartBtn = document.createElement("button");
+var kbrd = document.getElementsByClassName("game-header__actions")[0].appendChild(myStartBtn);
+
+myStartBtn.style = "width: 4rem; height: 4rem; font-size: 3rem;"
+myStartBtn.name = "Starting button";
+
+myStartBtn.onclick = function () {
+    console.log(wordFound)
+    if (wordFound != 0)
+        reset();
+    start();
+
+  };
